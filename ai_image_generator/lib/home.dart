@@ -1,3 +1,5 @@
+import 'package:ai_image_generator/service/api_sevce.dart';
+import 'package:ai_image_generator/widgets/progress_indicator.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
@@ -14,11 +16,16 @@ class _HomeState extends State<Home> {
 
   String? curentVal;
 
-  bool isLoading = false;
+  bool isLoading = true;
+
+  TextEditingController textEditingController = TextEditingController();
+
+  String? image;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text(
           "AI Image Generator",
@@ -41,6 +48,7 @@ class _HomeState extends State<Home> {
                 SizedBox(
                   height: 50,
                   child: TextFormField(
+                    controller: textEditingController,
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.all(15),
                       hintText: "eg. 'Lion with a crown'",
@@ -66,7 +74,23 @@ class _HomeState extends State<Home> {
                       child: SizedBox(
                         height: 45,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: ()async{
+
+                            if(textEditingController.text.isNotEmpty && curentVal!.isNotEmpty){
+
+                              image = await APIService.generateImage(textEditingController.text, curentVal!);
+                              setState(() {
+                                isLoading = false;
+                              });
+                            }else{
+
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please pass query and size")));
+                              setState(() {
+                                isLoading =true;
+                              });
+                            }
+
+                            
                             
                           },
                           child: const Text(
@@ -125,28 +149,14 @@ class _HomeState extends State<Home> {
             ), 
           ),
 
+
+
+
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(15),
-              child:isLoading? Container(
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(20)
-            
-                ),
-                width: double.infinity,
-                
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                        
-                    Image.asset("assets/images/loading.gif",width: 250,),
-                    Text("Waiting for the image to be generated...")
-                        
-                  ],
-                ),
-              ):
-
+              child:isLoading? 
+              progressIndicator():
               Container(
                 decoration: BoxDecoration(
                   color: Colors.black,
@@ -161,18 +171,15 @@ class _HomeState extends State<Home> {
                         
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: Image.asset("assets/images/ai.jpeg",width: 250,),
+                      child: Image.network(image.toString(),width: 250,),
                     ),
-
                     SizedBox(height: 10,),
-
                     SizedBox(
                       height: 50,
                       width: 150,
                       child: ElevatedButton(
                         onPressed: () {
                           setState(() {
-                            isLoading =!isLoading;
                           });
                         },
                         child: Row(
